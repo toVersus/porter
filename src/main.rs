@@ -76,17 +76,8 @@ impl Stage {
 
         match self.objects[tp] {
             Object::ObjSpace | Object::ObjGoal => {
-                if let Object::ObjGoal = self.objects[tp] {
-                    self.objects[tp] = Object::ObjManOnGoal;
-                } else {
-                    self.objects[tp] = Object::ObjMan;
-                }
-
-                if let Object::ObjBlockOnGoal = self.objects[p] {
-                    self.objects[p] = Object::ObjGoal;
-                } else {
-                    self.objects[p] = Object::ObjSpace;
-                }
+                Stage::update_goal_for_man(self, tp);
+                Stage::update_man_on_goal(self, p);
             }
             Object::ObjBlock | Object::ObjBlockOnGoal => {
                 // check whether 2 spaces forward from current position is under the valid range.
@@ -102,32 +93,51 @@ impl Stage {
 
                 // 2 spaces forward from current position.
                 let tp2 = ((ty + dy) * (STAGEWIDTH as i32) + (tx + dx)) as usize;
+
                 // check the object on current position, target position and 1 space forward from target position.
                 match self.objects[tp2] {
                     Object::ObjSpace | Object::ObjGoal => {
-                        if let Object::ObjGoal = self.objects[tp2] {
-                            self.objects[tp2] = Object::ObjBlockOnGoal;
-                        } else {
-                            self.objects[tp2] = Object::ObjBlock;
-                        }
-
-                        if let Object::ObjBlockOnGoal = self.objects[tp] {
-                            self.objects[tp] = Object::ObjManOnGoal;
-                        } else {
-                            self.objects[tp] = Object::ObjMan;
-                        }
-
-                        if let Object::ObjManOnGoal = self.objects[p] {
-                            self.objects[p] = Object::ObjGoal
-                        } else {
-                            self.objects[p] = Object::ObjSpace
-                        }
+                        Stage::update_goal_for_block(self, tp2);
+                        Stage::update_block_on_goal(self, tp);
+                        Stage::update_man_on_goal(self, p);
                     }
                     _ => {}
                 }
             }
             _ => {}
         }
+    }
+
+    fn update_goal_for_man(&mut self, idx: usize) {
+        if let Object::ObjGoal = self.objects[idx] {
+            self.objects[idx] = Object::ObjManOnGoal;
+        } else {
+            self.objects[idx] = Object::ObjMan;
+        }
+    }
+
+    fn update_goal_for_block(&mut self, idx: usize) {
+        if let Object::ObjGoal = self.objects[idx] {
+            self.objects[idx] = Object::ObjBlockOnGoal;
+            return;
+        }
+        self.objects[idx] = Object::ObjBlock;
+    }
+
+    fn update_block_on_goal(&mut self, idx: usize) {
+        if let Object::ObjBlockOnGoal = self.objects[idx] {
+            self.objects[idx] = Object::ObjManOnGoal;
+            return;
+        }
+        self.objects[idx] = Object::ObjMan;
+    }
+
+    fn update_man_on_goal(&mut self, idx: usize) {
+        if let Object::ObjManOnGoal = self.objects[idx] {
+            self.objects[idx] = Object::ObjGoal
+        } else {
+            self.objects[idx] = Object::ObjSpace
+        };
     }
 
     fn update(&mut self, input: char) {
