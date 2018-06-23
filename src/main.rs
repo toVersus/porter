@@ -116,9 +116,9 @@ impl Stage {
     fn update_goal_for_man(&mut self, idx: usize) {
         if let Object::ObjGoal = self.objects[idx] {
             self.objects[idx] = Object::ObjManOnGoal;
-        } else {
-            self.objects[idx] = Object::ObjMan;
+            return;
         }
+        self.objects[idx] = Object::ObjMan;
     }
 
     fn update_goal_for_block(&mut self, idx: usize) {
@@ -139,10 +139,10 @@ impl Stage {
 
     fn update_man_on_goal(&mut self, idx: usize) {
         if let Object::ObjManOnGoal = self.objects[idx] {
-            self.objects[idx] = Object::ObjGoal
-        } else {
-            self.objects[idx] = Object::ObjSpace
-        };
+            self.objects[idx] = Object::ObjGoal;
+            return;
+        }
+        self.objects[idx] = Object::ObjSpace;
     }
 
     fn update(&mut self, input: char) {
@@ -170,7 +170,8 @@ impl Stage {
             if let Object::ObjMan = *object {
                 idx = i;
                 break;
-            } else if let Object::ObjManOnGoal = *object {
+            }
+            if let Object::ObjManOnGoal = *object {
                 idx = i;
                 break;
             }
