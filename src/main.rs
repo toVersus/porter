@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::io::{stdout, BufWriter, Write};
 
 const STAGEDATA: &'static str = "##########
 # ..   p #
@@ -47,17 +48,21 @@ impl Stage {
     }
 
     fn draw(&mut self) {
+        // draw stage using buffer for large data set.
+        let out = stdout();
+        let mut out = BufWriter::new(out.lock());
+
         // clear the entire screen.
-        print!("{}[2J", 27 as char);
+        write!(out, "{}[2J", 27 as char).unwrap();
 
         // order of the elements in the dict is same as enum Object.
-        let font = [' ', '#', '.', 'o', 'O', 'p', 'P'];
+        let font = [" ", "#", ".", "o", "O", "p", "P"];
 
         for y in 0..STAGEHEIGHT {
             for x in 0..STAGEWIDTH {
-                print!("{}", font[self.objects[y * STAGEWIDTH + x] as usize]);
+                write!(out, "{}", font[self.objects[y * STAGEWIDTH + x] as usize]).unwrap();
             }
-            println!()
+            writeln!(out, "").unwrap();
         }
     }
 
