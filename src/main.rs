@@ -1,14 +1,8 @@
 use std::collections::HashMap;
-use std::io::{stdout, BufWriter, Write};
+use std::fs::File;
+use std::io::{BufWriter, stdout, Write};
+use std::io::Read;
 
-const STAGEDATA: &'static str = "##########
-# ..   p #
-# oo . o #
-#  o     #
-#    . o #
-#    .   #
-#        #
-##########";
 const STAGEWIDTH: usize = 10;
 const STAGEHEIGHT: usize = 8;
 
@@ -30,7 +24,9 @@ struct Stage {
 }
 
 impl Stage {
-    fn initialize(&mut self) {
+    fn load(&mut self) {
+        let stage_data = read_stage_file();
+
         let mut object_map = HashMap::new();
         object_map.insert(' ', Object::ObjSpace);
         object_map.insert('#', Object::ObjWall);
@@ -40,7 +36,7 @@ impl Stage {
         object_map.insert('p', Object::ObjMan);
         object_map.insert('P', Object::ObjManOnGoal);
 
-        for (y, line) in STAGEDATA.to_string().lines().enumerate() {
+        for (y, line) in stage_data.lines().enumerate() {
             for (x, data) in line.chars().enumerate() {
                 self.objects[y * STAGEWIDTH + x] = object_map[&data];
             }
@@ -92,9 +88,9 @@ impl Stage {
                     || ty2 < 0
                     || tx2 >= ((STAGEWIDTH * STAGEHEIGHT) as i32)
                     || ty2 >= ((STAGEHEIGHT * STAGEWIDTH) as i32)
-                {
-                    return;
-                }
+                    {
+                        return;
+                    }
 
                 // 2 spaces forward from current position.
                 let tp2 = ((ty + dy) * (STAGEWIDTH as i32) + (tx + dx)) as usize;
@@ -161,12 +157,6 @@ impl Stage {
         }
         let mut idx: usize = 0;
         for (i, object) in self.objects.iter().enumerate() {
-            // "if" expressions don't allow us to compare enum variant.
-            // "match" expressions are so painful to use every single time.
-            // "if let" expressions are optimal solution as described in the document:
-            // https://doc.rust-lang.org/stable/rust-by-example/flow_control/if_let.html
-            // However, currently "if let" expressions are inmature because it doesn't take multiple conditions:
-            // https://github.com/rust-lang/rfcs/issues/2411
             if let Object::ObjMan = *object {
                 idx = i;
                 break;
@@ -193,7 +183,7 @@ impl Stage {
     }
 
     fn reset(&mut self) {
-        Stage::initialize(self);
+        Stage::load(self);
         Stage::draw(self);
     }
 }
@@ -206,9 +196,17 @@ impl Default for Stage {
     }
 }
 
+fn read_stage_file() -> String {
+    let mut f = File::open("src/stage/stage1.txt").expect("file not found");
+    let mut stage_data: String = String::new();
+    f.read_to_string(&mut stage_data)
+        .expect("failed to read file contents");
+    return stage_data
+}
+
 fn main() {
     let mut state: Stage = Stage::default();
-    Stage::initialize(&mut state);
+    Stage::load(&mut state);
 
     loop {
         Stage::draw(&mut state);
