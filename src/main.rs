@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::fs::File;
+use std::fs::{File, read_dir};
 use std::io::{BufWriter, stdout, Write};
 use std::io::Read;
 
@@ -20,13 +20,19 @@ enum Object {
 }
 
 struct Stage {
+    origin: String,
     objects: [Object; STAGEWIDTH * STAGEHEIGHT],
 }
 
 impl Stage {
-    fn load(&mut self) {
-        let stage_data = read_stage_file();
+    fn initialize(filepath: &str) -> Stage {
+        Stage {
+            origin: read_stage_file(filepath),
+            objects: [Object::ObjUnknown; STAGEWIDTH * STAGEHEIGHT],
+        }
+    }
 
+    fn load(&mut self) {
         let mut object_map = HashMap::new();
         object_map.insert(' ', Object::ObjSpace);
         object_map.insert('#', Object::ObjWall);
@@ -36,7 +42,7 @@ impl Stage {
         object_map.insert('p', Object::ObjMan);
         object_map.insert('P', Object::ObjManOnGoal);
 
-        for (y, line) in stage_data.lines().enumerate() {
+        for (y, line) in self.origin.lines().enumerate() {
             for (x, data) in line.chars().enumerate() {
                 self.objects[y * STAGEWIDTH + x] = object_map[&data];
             }
@@ -188,38 +194,35 @@ impl Stage {
     }
 }
 
-impl Default for Stage {
-    fn default() -> Stage {
-        Stage {
-            objects: [Object::ObjUnknown; STAGEWIDTH * STAGEHEIGHT],
-        }
-    }
-}
-
-fn read_stage_file() -> String {
-    let mut f = File::open("src/stage/stage1.txt").expect("file not found");
+fn read_stage_file(filepath: &str) -> String {
+    let mut f = File::open(filepath).expect("file not found");
     let mut stage_data: String = String::new();
     f.read_to_string(&mut stage_data)
         .expect("failed to read file contents");
-    return stage_data
+    return stage_data;
 }
 
 fn main() {
-    let mut state: Stage = Stage::default();
-    Stage::load(&mut state);
+    let stage_files = read_dir("./src/stage").expect("directory not found");
+    for file in stage_files {
+        let mut state: Stage = Stage::initialize(
+            file.expect("file not found").path().to_str().unwrap());
 
-    loop {
-        Stage::draw(&mut state);
+        Stage::load(&mut state);
 
-        if Stage::check_clear(&state) {
-            println!("STAGE CLEAR!");
-            break;
+        loop {
+            Stage::draw(&mut state);
+
+            if Stage::check_clear(&state) {
+                println!("STAGE CLEAR!");
+                break;
+            }
+
+            println!("a: left s: right w: up z: down r: reset. Input command?");
+
+            let mut input = String::new();
+            std::io::stdin().read_line(&mut input).ok();
+            Stage::update(&mut state, input.chars().nth(0).unwrap());
         }
-
-        println!("a: left s: right w: up z: down r: reset. Input command?");
-
-        let mut input = String::new();
-        std::io::stdin().read_line(&mut input).ok();
-        Stage::update(&mut state, input.chars().nth(0).unwrap());
     }
 }
