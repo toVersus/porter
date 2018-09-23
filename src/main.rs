@@ -1,7 +1,9 @@
+#![feature(rust_2018_preview)]
+
 use std::collections::HashMap;
-use std::fs::{File, read_dir};
-use std::io::{BufWriter, stdout, Write};
+use std::fs::{read_dir, File};
 use std::io::Read;
+use std::io::{stdout, BufWriter, Write};
 
 const STAGEWIDTH: usize = 10;
 const STAGEHEIGHT: usize = 8;
@@ -94,9 +96,9 @@ impl Stage {
                     || ty2 < 0
                     || tx2 >= ((STAGEWIDTH * STAGEHEIGHT) as i32)
                     || ty2 >= ((STAGEHEIGHT * STAGEWIDTH) as i32)
-                    {
-                        return;
-                    }
+                {
+                    return;
+                }
 
                 // 2 spaces forward from current position.
                 let tp2 = ((ty + dy) * (STAGEWIDTH as i32) + (tx + dx)) as usize;
@@ -205,8 +207,8 @@ fn read_stage_file(filepath: &str) -> String {
 fn main() {
     let stage_files = read_dir("./src/stage").expect("directory not found");
     for file in stage_files {
-        let mut state: Stage = Stage::initialize(
-            file.expect("file not found").path().to_str().unwrap());
+        let mut state: Stage =
+            Stage::initialize(file.expect("file not found").path().to_str().unwrap());
 
         Stage::load(&mut state);
 
